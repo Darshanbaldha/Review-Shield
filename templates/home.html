@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-gradient-primary text-white text-center py-4">
+        <h1 class="mb-0">
+          <i class="bi bi-search"></i> Fake Review Detector
+        </h1>
+        <p class="mb-0 mt-3 fs-5">Analyze reviews from e-commerce websites or upload your dataset</p>
+      </div>
+      
+      <div class="card-body p-4 p-md-5">
+        <!-- Input Form -->
+        <form id="reviewForm" enctype="multipart/form-data">
+          
+          <!-- URL Input Section -->
+          <div class="mb-5">
+            <label class="form-label fw-bold fs-5">
+              <i class="bi bi-link-45deg text-primary"></i> Product Review URL
+            </label>
+            <input 
+              type="url" 
+              name="link" 
+              class="form-control form-control-lg" 
+              placeholder="https://amazon.in/product-reviews/... or Flipkart/Meesho review URL"
+            >
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle"></i> 
+              Paste the URL of a product page with reviews from Amazon, Flipkart, or Meesho
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="text-center my-5">
+            <hr class="w-25 d-inline-block">
+            <span class="badge bg-secondary fs-6 mx-3">OR</span>
+            <hr class="w-25 d-inline-block">
+          </div>
+
+          <!-- File Upload Section -->
+          <div class="mb-5">
+            <label class="form-label fw-bold fs-5">
+              <i class="bi bi-file-earmark-arrow-up text-success"></i> Upload CSV Dataset
+            </label>
+            
+            <div id="drop-area" class="border border-2 border-dashed border-primary rounded-3 p-5 text-center bg-light">
+              <div class="mb-3">
+                <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
+              </div>
+              <h5 class="fw-bold text-primary mb-2">Drag & Drop your CSV file here</h5>
+              <p class="text-muted mb-3">or click below to browse</p>
+              <input type="file" name="file" id="fileInput" class="form-control form-control-lg" accept=".csv">
+            </div>
+            
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle"></i> 
+              CSV should contain a column named 'review', 'text', 'reviews.text', or similar
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button type="submit" class="btn btn-success btn-lg px-5 py-3">
+              <i class="bi bi-play-circle"></i> 
+              <span class="ms-2">Analyze Reviews</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="text-center my-5" style="display:none;">
+          <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <h5 class="text-primary">Analyzing Reviews...</h5>
+          <p class="text-muted">This may take a few moments depending on the number of reviews</p>
+        </div>
+
+        <!-- Download Section (Persistent) -->
+        <div id="download" class="mt-4"></div>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-4"></div>
+
+        <!-- Chart Container -->
+        <div id="chart-container" class="mt-5" style="display:none;">
+          <div class="card border-0 shadow">
+            <div class="card-header bg-light text-center py-3">
+              <h5 class="mb-0 text-dark">
+                <i class="bi bi-pie-chart text-primary"></i> 
+                Analysis Summary
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <canvas id="reviewChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions Card -->
+<div class="row justify-content-center mt-5">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card border-info shadow">
+      <div class="card-header bg-info text-white py-3">
+        <h5 class="mb-0">
+          <i class="bi bi-question-circle"></i> How to Use This Tool
+        </h5>
+      </div>
+      <div class="card-body p-4">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-4">
+              <h6 class="text-primary">
+                <i class="bi bi-1-circle-fill"></i> URL Method
+              </h6>
+              <ul class="list-unstyled mt-3">
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Go to any product page (Amazon/Flipkart/Meesho)
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Copy the URL from your browser
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Paste it in the URL field above
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Click "Analyze Reviews"
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-4">
+              <h6 class="text-primary">
+                <i class="bi bi-2-circle-fill"></i> CSV Method
+              </h6>
+              <ul class="list-unstyled mt-3">
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Prepare a CSV file with reviews
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Ensure column is named 'review' or 'text'
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Upload using drag & drop or browse
+                </li>
+                <li class="mb-2">
+                  <i class="bi bi-arrow-right text-success"></i> 
+                  Click "Analyze Reviews"
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Supported Platforms -->
+        <div class="mt-4 p-3 bg-light rounded-3">
+          <h6 class="text-dark mb-3">
+            <i class="bi bi-check2-all text-success"></i> Supported Platforms
+          </h6>
+          <div class="row text-center">
+            <div class="col-4">
+              <span class="badge bg-warning text-dark fs-6 py-2 px-3">Amazon</span>
+            </div>
+            <div class="col-4">
+              <span class="badge bg-primary fs-6 py-2 px-3">Flipkart</span>
+            </div>
+            <div class="col-4">
+              <span class="badge bg-success fs-6 py-2 px-3">Meesho</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="row justify-content-center mt-5">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card border-0 shadow">
+      <div class="card-body p-4 text-center">
+        <h5 class="mb-4">
+          <i class="bi bi-stars text-warning"></i> Key Features
+        </h5>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="p-3">
+              <i class="bi bi-lightning-charge fs-1 text-warning"></i>
+              <h6 class="mt-2">Fast Analysis</h6>
+              <small class="text-muted">Quick processing of reviews</small>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="p-3">
+              <i class="bi bi-shield-check fs-1 text-success"></i>
+              <h6 class="mt-2">AI-Powered</h6>
+              <small class="text-muted">Advanced detection algorithms</small>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="p-3">
+              <i class="bi bi-download fs-1 text-primary"></i>
+              <h6 class="mt-2">Export Results</h6>
+              <small class="text-muted">Download analysis as CSV</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
